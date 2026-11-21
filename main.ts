@@ -23,7 +23,14 @@ function sha256Hex(buf: Buffer): string {
 }
 
 function pngSize(buf: Buffer): { width: number; height: number } {
-  // IHDR chunk: width at offset 16, height at offset 20.
+  // A PNG starts with its 8-byte magic, then the IHDR chunk: 4-byte length,
+  // 4-byte type "IHDR", then width at offset 16 and height at offset 20.
+  if (buf.length < 24) {
+    throw new Error(`entry.png is only ${buf.length} bytes; too short to be a PNG`);
+  }
+  if (buf.subarray(12, 16).toString("ascii") !== "IHDR") {
+    throw new Error("entry.png has no IHDR chunk where a PNG must");
+  }
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
 }
 
